@@ -15,18 +15,11 @@ import re
 import openai
 import pandas as pd
 
-
-
-# 有報データ
 df_X_df_segment = pd.read_csv('MDA_X_DataSet.csv', encoding='utf-8', dtype={'nkcode':'object', 'ticker':'object', 'ticker_上場廃止':'object', 'year':'object', 'month':'object', 'month_end':'object'}, parse_dates=['報告日', '決算日'])
 print(df_X_df_segment)
 
-
-# %%
-
 openai.api_key = os.getenv('OPENAI_API_KEY')
 api_model = "gpt-4o-mini-2024-07-18"
-# 分割する文字数の設定
 max_chars_per_chunk = 100000 - 500
 
 def analyze_sentiment(df, api_model):
@@ -49,7 +42,6 @@ def analyze_sentiment(df, api_model):
     「しかしながら、資材費や労務費のコストが高止まりする中で、北海道・東北地区の集中豪雨の影響により、公共工事の優先順位が入れ替わり、当初予定されていた工期が先延ばしになるなど、当社を取り巻く経営環境は厳しい状況で推移しました」
     「当事業年度におけるわが国経済は、政府による経済政策や金融政策の総動員もあり、緩やかな回復基調となったものの、個人消費や設備投資は力強さを欠き、海外経済の減速と為替、原材料価格の変動リスクを抱え、先行き不透明な状況が続いた」"""
      
-    # 指定した文字数ごとにテキストを分割する関数
     def split_text(text, max_chars=max_chars_per_chunk):
         sentences = text.split('。')
         chunks = []
@@ -71,13 +63,8 @@ def analyze_sentiment(df, api_model):
 
         return chunks
 
-    # データフレームを設定
     dat = df.copy()
-
-    # 結果を保存するためのリスト
     results_rand = []
-
-    # APIを呼び出し
     for index, row in dat.iterrows():
         text = row['MDA']
         ticker = row['ticker']
@@ -92,16 +79,14 @@ def analyze_sentiment(df, api_model):
         negative_probability = 	row['negative_probability']
         
         print(name, ticker)
-        # テキストを分割
         text_chunks = split_text(text)
 
-        # 分割したテキストを順に処理
         all_responses = []
         all_input_tokens = []
         all_output_tokens = []
         chunk_texts = []
         for chunk in text_chunks:
-            time.sleep(20)  # APIコール前に待機時間を設ける
+            time.sleep(20)
 
             retry_attempts = 0
             max_retries = 5
@@ -114,7 +99,7 @@ def analyze_sentiment(df, api_model):
                             {"role": "user", "content": chunk}
                         ],
                         temperature=0.3,
-                        max_tokens=500,  # 1回のレスポンスで使うトークン数
+                        max_tokens=500, 
                         top_p=0.5,
                         frequency_penalty=0.5,
                         presence_penalty=0
@@ -126,17 +111,16 @@ def analyze_sentiment(df, api_model):
                     chunk_texts.append(response_text_rand)
                     all_input_tokens.append(response_rand.usage.prompt_tokens)
                     all_output_tokens.append(response_rand.usage.completion_tokens)
-                    break  # 成功した場合、ループを抜ける
+                    break 
 
                 except openai.OpenAIError as e:
                     retry_attempts += 1
-                    wait_time = 30  # デフォルトの待機時間
+                    wait_time = 30 
                     print(f"Rate limit exceeded: {e}. Retrying in {wait_time} seconds...")
-                    time.sleep(wait_time)  # 指定された時間待機して再試行
-                    continue  # 再試行を継続
+                    time.sleep(wait_time)
+                    continue  
 
 
-        # 整合性のスコアを抽出
         posi_scores = []
         nega_scores = []
         posi_pattern = re.compile(r'positive_score\s*[:：]\s*([0-9]{1,3}(\.[0-9]+)?)')
@@ -149,11 +133,9 @@ def analyze_sentiment(df, api_model):
             if nega_match:
                 nega_scores.append(float(nega_match.group(1)))    
 
-        # 平均スコアを計算
         posi_score_avg = sum(posi_scores) / len(posi_scores) if posi_scores else None
         nega_score_avg = sum(nega_scores) / len(nega_scores) if nega_scores else None
 
-        # 結果を収集
         result_rand = {
             "ticker": ticker,
             "name": name,
@@ -171,11 +153,10 @@ def analyze_sentiment(df, api_model):
             "MDA_文字数": MDA_文字数
         }
         if len(text_chunks) > 1:
-            result_rand["chunk_responses"] = chunk_texts  # 分割された場合のみチャンクごとの応答テキストを追加
+            result_rand["chunk_responses"] = chunk_texts
 
         results_rand.append(result_rand)
 
-    # 結果をデータフレームに変換
     results_dat = pd.DataFrame(results_rand)
 
     max_segments = max(results_dat['input_tokens'].apply(len))
@@ -184,68 +165,43 @@ def analyze_sentiment(df, api_model):
         results_dat[f'input_tokens_{i+1}'] = results_dat['input_tokens'].apply(lambda x: x[i] if i < len(x) else None)
         results_dat[f'output_tokens_{i+1}'] = results_dat['output_tokens'].apply(lambda x: x[i] if i < len(x) else None)
 
-    # 不要な列を削除
     results_dat.drop(columns=['input_tokens', 'output_tokens'], inplace=True)
     return results_dat
 
 
-
-# %% [markdown]
-# # 銘柄ごとに実行してファイル保存する
-
-# %%
-# 以下を実行したらtickerごとに全年度分の処理が行われる
-# 通信エラーなどの場合は01に進み、処理前のtickerだけのdatasetを作成して再度処理を行う
-# エラーが発生したティッカーを保存するリスト
 error_tickers = []
 tickers_list = df_X_df_segment['ticker'].unique().tolist()
 for ticker in tickers_list:
     try:
-        # ティッカーに対してセンチメント分析を実行
         results_ = analyze_sentiment(df_X_df_segment[df_X_df_segment['ticker'] == ticker], api_model)
         results_dat_ = results_.copy()
 
-        # センチメントスコアのスケールを調整
         results_dat_[['gpt_positive', 'gpt_negative']] = results_dat_[['gpt_positive', 'gpt_negative']] / 100
 
-        # gpt_positive や gpt_negative が NaN かどうかをチェック
         if results_dat_['gpt_positive'].isna().any() or results_dat_['gpt_negative'].isna().any():
-            raise ValueError(f"{ticker}のセンチメントスコアがNaNです")
+            raise ValueError(f"{ticker} is NaN")
 
-        # 結果をCSVに保存
         results_dat_.to_csv(f'{ticker}.csv', index=False, encoding='utf-8-sig')
 
-        # 成功メッセージを表示
-        print(f'{ticker}の保存が完了しました')
 
     except Exception as e:
-        # エラーメッセージを表示し、エラーリストに追加
-        print(f'{ticker}の処理中にエラーが発生しました: {e}')
+        print(f'{ticker} error: {e}')
         error_tickers.append(ticker)
         
-# エラーリストをファイルに保存（オプション）
 with open('error_tickers.txt', 'w') as f:
     for ticker in error_tickers:
         f.write(f"{ticker}\n")
 
-# %%
-# ディレクトリのパスを指定
 directory = '/'
-
-# 全てのCSVファイルをリストに追加
 csv_files = [os.path.join(directory, file) for file in os.listdir(directory) if file.endswith('.csv')]
 
-# 各CSVファイルを読み込み、縦に結合
 df_list = [pd.read_csv(file, parse_dates=['決算日', '報告日'], dtype={'ticker':'object', 'year':'object', 'month':'object'}) for file in csv_files]
 combined_df = pd.concat(df_list, axis=0)
 
-# 結合結果を保存（必要に応じてファイル名を変更）
 output_file = 'combined_output.csv'
 combined_df = combined_df.sort_values(['ticker', '決算日'])
 combined_df[['ticker', 'year', 'month']] = combined_df[['ticker', 'year', 'month']].astype(str)
 combined_df.to_csv(output_file, index=False)
 
-print(f"All CSV files have been successfully combined and saved to {output_file}.")
-print(combined_df)
 
 
