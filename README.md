@@ -40,10 +40,7 @@ Intermediate files produced by this code have been excluded from this documentat
 
 # Author
 
-* Moe Nakasuji
-* Katsuhiko Okada
-* Yasutomo Tsukioka
-* Kwansei Gakuin University
-
-* Takahiro Yamasaki
-* Osaka Sangyo University
+* Moe Nakasuji (Kwansei Gakuin University)
+* Katsuhiko Okada (Kwansei Gakuin University)
+* Yasutomo Tsukioka (Kwansei Gakuin University)
+* Takahiro Yamasaki (Osaka Sangyo University)
