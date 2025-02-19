@@ -124,8 +124,8 @@ Below is an example of how to set up the environment using Google Colab. For loc
 1. Run `Get_securities_report.py` to fetch securities reports.  
 2. Extracted keywords and MD&A sections will be saved as CSV or text files.  
 
-```bash
-python Get_securities_report.py --output_dir ./data/reports
+   ```bash
+   python Get_securities_report.py --output_dir ./data/reports
 
 ### 2. Sentiment Analysis Using a Financial Dictionary
 1. Open `sentiment_dic.ipynb` in Colab.  
@@ -141,7 +141,24 @@ python Get_securities_report.py --output_dir ./data/reports
 
 ### 5. Sentiment Analysis with Other LLMs
 
-- **`sentiment_chatgpt.py`**  
+- **`sentiment_chatgpt.py`**
   Uses the ChatGPT API to analyze sentiment.  
-  ```bash
-  python sentiment_chatgpt.py --input_file ./data/reports/example.txt --output_file ./results/chatgpt_sentiment.csv
+     ```bash
+     python sentiment_chatgpt.py --input_file ./data/reports/example.txt --output_file ./results/chatgpt_sentiment.csv
+
+- **`sentiment_Claude.ipynb`**
+- Demonstrates how to use Claude (Anthropic API) for sentiment analysis in a notebook format.
+
+- **`sentiment_Gemini.ipynb`**
+- Demonstrates how to use Gemini for sentiment analysis in a notebook format.
+
+## Note
+Intermediate files produced by this code have been excluded from this documentation due to size constraints.
+
+## Author
+* Moe Nakasuji
+* Katsuhiko Okada
+* Yasutomo Tsukioka
+* Kwansei Gakuin University
+* Takahiro Yamasaki
+* Osaka Sangyo University
