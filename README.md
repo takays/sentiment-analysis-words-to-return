@@ -147,18 +147,16 @@ Below is an example of how to set up the environment using Google Colab. For loc
      python sentiment_chatgpt.py --input_file ./data/reports/example.txt --output_file ./results/chatgpt_sentiment.csv
 
 - **`sentiment_Claude.ipynb`**
-- Demonstrates how to use Claude (Anthropic API) for sentiment analysis in a notebook format.
+  Demonstrates how to use Claude (Anthropic API) for sentiment analysis in a notebook format.
 
 - **`sentiment_Gemini.ipynb`**
-- Demonstrates how to use Gemini for sentiment analysis in a notebook format.
+  Demonstrates how to use Gemini for sentiment analysis in a notebook format.
 
 ## Note
 Intermediate files produced by this code have been excluded from this documentation due to size constraints.
 
 ## Author
-* Moe Nakasuji
-* Katsuhiko Okada
-* Yasutomo Tsukioka
-* Kwansei Gakuin University
-* Takahiro Yamasaki
-* Osaka Sangyo University
+* Moe Nakasuji (Kwansei Gakuin University)
+* Katsuhiko Okada (Kwansei Gakuin University)
+* Yasutomo Tsukioka (Kwansei Gakuin University)
+* Takahiro Yamasaki (Osaka Sangyo University)
