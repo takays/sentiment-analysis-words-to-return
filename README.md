@@ -1,4 +1,4 @@
-# From Words to Returns: Sentiment Analysis of Japanese 10-K Reports Using Advanced Large Language Models
+# sentiment-analysis-words-to-return
 
 This repository contains the code used in the study **"From Words to Returns: Sentiment Analysis of Japanese 10-K Reports Using Advanced Large Language Models"**. All scripts and notebooks have been tested in Google Colaboratory (Colab) with Python.
 
