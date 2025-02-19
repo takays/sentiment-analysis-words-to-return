@@ -1,45 +1,32 @@
-# sentiment-analysis-words-to-return
+# Sentiment Analysis: From Words to Returns
 
-This is the code used in "From words to returns: Sentiment analysis of Japanese 10-K reports using advanced Large Language Models".
-This code is being verified with Google Colaboratory and Python.
+This repository contains the code used in the paper:  
+**"From words to returns: Sentiment analysis of Japanese 10-K reports using advanced Large Language Models."**
 
-## Code Documentation
+---
 
-### Get_securities_report.py
+## Overview
 
-Retrieves Japanese companies' Securities Reports and extracts specific keywords and Management Discussion and Analysis (MD&A) sections
+The main objectives of this project are:
 
-### sentiment_dic.ipynb
+1. **Retrieving Japanese companies' Securities Reports** and extracting specific keywords along with the Management Discussion and Analysis (MD&A) sections.
+2. **Performing sentiment analysis** using a variety of methods:
+   - **Financial polarity dictionary**
+   - **Fine-tuned DeBERTa model**
+   - **ChatGPT**, **Claude**, and **Gemini** models
 
-Calculates and outputs positive/negative sentiment values using the financial polarity dictionary
+All scripts and notebooks have been tested on **Google Colaboratory** (Colab) using **Python**.
 
-### DeBERTa_tune.ipynb
+---
 
-Performs fine-tuning of the DeBERTa model based on financial documents"
+## Repository Structure
 
-### sentiment_DeBERTa.ipynb
-
-Calculates and outputs positive/negative sentiment values utilizing the DeBERTa model
-
-### sentiment_chatgpt.py
-
-Calculates and outputs positive/negative sentiment values utilizing ChatGPT
-
-### sentiment_Claude.ipynb
-
-Calculates and outputs positive/negative sentiment values utilizing Claude
-
-### sentiment_Gemini.ipynb
-
-Calculates and outputs positive/negative sentiment values utilizing Gemini
-
-## Note
-
-Intermediate files produced by this code have been excluded from this documentation due to size constraints.
-
-## Author
-
-* Moe Nakasuji (Kwansei Gakuin University)
-* Katsuhiko Okada (Kwansei Gakuin University)
-* Yasutomo Tsukioka (Kwansei Gakuin University)
-* Takahiro Yamasaki (Osaka Sangyo University)
+```plaintext
+sentiment-analysis-words-to-return/
+├── Get_securities_report.py
+├── sentiment_dic.ipynb
+├── DeBERTa_tune.ipynb
+├── sentiment_DeBERTa.ipynb
+├── sentiment_chatgpt.py
+├── sentiment_Claude.ipynb
+└── sentiment_Gemini.ipynb
