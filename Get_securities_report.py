@@ -1,3 +1,7 @@
+# [General Comment at the top of the file]
+# This script downloads Japanese securities reports (Yukashoken Hokokusho) from the EDINET API.
+# It then extracts specific text sections from the downloaded XBRL data and compiles them into a single CSV file.
+# EDINET is the official electronic disclosure system for Japanese companies.
 # %%
 import requests
 import datetime
@@ -56,13 +60,13 @@ def create_report_list(day_list):
 
             if ordinance_code == "010" and  form_code ==f'{Form_code}' :
                 company_name=json_data["results"][num]["filerName"]
-                edi={'会社名':company_name,
-                            '書類名':json_data["results"][num]["docDescription"],
+                edi={'会社名':company_name,    # Key:'Company Name'
+                            '書類名':json_data["results"][num]["docDescription"],    # Key:'Document Name'
                             'docID':json_data["results"][num]["docID"],
-                            '証券コード':json_data["results"][num]["secCode"],
-                            'ＥＤＩＮＥＴコード':json_data["results"][num]["edinetCode"],
-                            '決算期':json_data["results"][num]["periodEnd"],
-                            '提出日': day}
+                            '証券コード':json_data["results"][num]["secCode"],       # Key:'Security Code'
+                            'ＥＤＩＮＥＴコード':json_data["results"][num]["edinetCode"],    # Key:'EDINET Code'
+                            '決算期':json_data["results"][num]["periodEnd"],         # Key:'Fiscal Period End'
+                            '提出日': day}     # Key:'Submission Date'
                 report_list.append(edi)
 
     return report_list
@@ -70,7 +74,7 @@ def create_report_list(day_list):
 report_list = create_report_list(day_list)
 list_df = pd.DataFrame(report_list)
 df = list_df.copy()
-df = df[df['証券コード'].notnull()]
+df = df[df['証券コード'].notnull()]    # 'Security Code'
 
 # make Securities report directory
 securities_report_dir = ipath
@@ -79,7 +83,7 @@ if not os.path.exists(securities_report_dir):
 
 for index, row in df.iterrows():
     edinet_code = row['docID']
-    security_code = row['証券コード']
+    security_code = row['証券コード']  # 'Security Code'
     directory = os.path.join(securities_report_dir, str(security_code))
 
     if not os.path.exists(directory):
@@ -96,34 +100,44 @@ output_file = search_dir + 'extracted_data.csv'
 
 csv_files = glob.glob(f"{search_dir}/**/XBRL_TO_CSV/jpcrp*", recursive=True)
 def extract_text_block(df, column_name):
-    row = df[df['項目名'] == column_name]
-    return row.iloc[0]['値'] if not row.empty else None
+    row = df[df['項目名'] == column_name]    # 'column_name'
+    return row.iloc[0]['値'] if not row.empty else None    # 'value'
 
 def extract_text_block_element(df, column_name):
-    row = df[df['要素ID'] == column_name]
-    return row.iloc[0]['値'] if not row.empty else None
+    row = df[df['要素ID'] == column_name]    # 'column_name'
+    return row.iloc[0]['値'] if not row.empty else None    # 'value'
 
 for csv_file in csv_files:
     try:
         df = pd.read_table(csv_file, encoding="utf-16", on_bad_lines='skip')
         ticker = os.path.basename(os.path.dirname(os.path.dirname(csv_file)))
-        reporting_date = extract_text_block(df, "提出日、表紙")
-        firm_name = extract_text_block(df, "会社名、表紙")
+        reporting_date = extract_text_block(df, "提出日、表紙")    # Item Name:'Submission Date, Cover Page'
+        firm_name = extract_text_block(df, "会社名、表紙")         # Item Name:'Company Name, Cover Page'
         
-        closing_date = extract_text_block(df, "当会計期間終了日、DEI")
-        Business_content = extract_text_block(df, "事業の内容 [テキストブロック]")
-        management_policy = extract_text_block(df, "経営方針、経営環境及び対処すべき課題等 [テキストブロック]") or extract_text_block(df, "対処すべき課題 [テキストブロック]")
-        business_risks = extract_text_block(df, "事業等のリスク [テキストブロック]")
-        financial_condition = extract_text_block(df, "経営者による財政状態、経営成績及びキャッシュ・フローの状況の分析 [テキストブロック]") or extract_text_block(df, "財政状態、経営成績及びキャッシュ・フローの状況の分析 [テキストブロック]") or extract_text_block_element(df, "jpcrp030000-asr_E00012-000:ManagementAnalysisOfFinancialPositionOperatingResultsAndCashFlowsTextBlock")
-        performance_summary = extract_text_block(df, "業績等の概要 [テキストブロック]")
-        important_contracts = extract_text_block(df, "経営上の重要な契約等 [テキストブロック]") or extract_text_block(df, "経営上の重要な契約等（該当なし） [テキストブロック]")
-        Production_and_sales = extract_text_block(df, "生産、受注及び販売の状況 [テキストブロック]")
-        research_development = extract_text_block(df, "研究開発活動 [テキストブロック]")
+        closing_date = extract_text_block(df, "当会計期間終了日、DEI")     # Item Name:'Current Fiscal Period End Date, DEI'
+        Business_content = extract_text_block(df, "事業の内容 [テキストブロック]")    # Item Name:'Description of Business [Text Block]'
+        management_policy = extract_text_block(df, "経営方針、経営環境及び対処すべき課題等 [テキストブロック]") or extract_text_block(df, "対処すべき課題 [テキストブロック]")    # Item Names:'Business Policy, Business Environment, and Issues to be Addressed [Text Block]' or 'Issues to be Addressed [Text Block]'
+        business_risks = extract_text_block(df, "事業等のリスク [テキストブロック]")    # Item Name:'Business Risks [Text Block]'
+        financial_condition = extract_text_block(df, "経営者による財政状態、経営成績及びキャッシュ・フローの状況の分析 [テキストブロック]") or extract_text_block(df, "財政状態、経営成績及びキャッシュ・フローの状況の分析 [テキストブロック]") or extract_text_block_element(df, "jpcrp030000-asr_E00012-000:ManagementAnalysisOfFinancialPositionOperatingResultsAndCashFlowsTextBlock")    # Item Names:'Management’s Discussion and Analysis of Financial Position, Operating Results, and Cash Flows [Text Block]' or 'Analysis of Financial Position, Operating Results, and Cash Flows [Text Block]'
+        performance_summary = extract_text_block(df, "業績等の概要 [テキストブロック]")    # Item Name:'Overview of Business Results [Text Block]'
+        important_contracts = extract_text_block(df, "経営上の重要な契約等 [テキストブロック]") or extract_text_block(df, "経営上の重要な契約等（該当なし） [テキストブロック]")    # Item Names:'Material Contracts for Operation [Text Block]' or 'Material Contracts for Operation (Not Applicable) [Text Block]'
+        Production_and_sales = extract_text_block(df, "生産、受注及び販売の状況 [テキストブロック]")    # Item Name:'Production, Orders, and Sales Status [Text Block]'
+        research_development = extract_text_block(df, "研究開発活動 [テキストブロック]")    # Item Name:'Research and Development Activities [Text Block]'
         extracted_data.append([firm_name, ticker, reporting_date, closing_date, Business_content, management_policy, business_risks, financial_condition, performance_summary, important_contracts, Production_and_sales, research_development])
     except Exception as e:
-        print(f"ファイル {csv_file} の処理中にエラーが発生しました: {e}")
+        print(f"ファイル {csv_file} の処理中にエラーが発生しました: {e}")    # Print statement:'An error occurred while processing the file: {e}'
 
+# Column names for the output CSV file.
 columns = ['name', 'ticker', 'reporting_date', 'acc', '事業の内容', '経営方針、経営環境及び対処すべき課題', '事業等のリスク', '経営者による財政状態、経営成績及びキャッシュ・フローの状況の分析', '業績等の概要', '経営上の重要な契約', '生産、受注及び販売の状況', '研究開発活動']
+# Japanese Columns Translation:
+# '事業の内容':'Description of Business'
+# '経営方針、経営環境及び対処すべき課題':'Business Policy, Business Environment, and Issues to be Addressed'
+# '事業等のリスク':'Business Risks'
+# '経営者による財政状態、経営成績及びキャッシュ・フローの状況の分析':'Management’s Discussion and Analysis of Financial Position, Operating Results, and Cash Flows'
+# '業績等の概要':'Overview of Business Results'
+# '経営上の重要な契約':'Material Contracts for Operation'
+# '生産、受注及び販売の状況':'Production, Orders, and Sales Status'
+# '研究開発活動':'Research and Development Activities'
 output_df = pd.DataFrame(extracted_data, columns=columns)
 output_df = output_df.sort_values(['ticker', 'reporting_date'])
 output_df.to_csv(output_file, index=False, encoding='utf-8')
@@ -213,8 +227,22 @@ for csv_file in csv_files:
         CorporateGovernance = parse_and_clean_text(CorporateGovernance) if CorporateGovernance else np.nan
 
         extracted_data.append([company_name, ticker, reporting_date, closing_date, management_policy, business_risks, financial_condition, Production_order_and_sales_status, performance_summary, important_contracts, research_development, PolicyOnHuman, PolicyOnHuman_target, CorporateGovernance])
-    
+
+# Column names for the final output CSV file.
 columns = ['name', 'ticker', '報告日', '決算日', '経営方針、経営環境及び対処すべき課題', '事業等のリスク', '経営者による財政状態、経営成績及びキャッシュ・フローの状況の分析', '生産、受注及び販売の状況', '業績等の概要', '経営上の重要な契約', '研究開発活動', 'サステナビリティに関する考え方及び取組', '人的資本目標', 'コーポレート・ガバナンス']
+# Japanese Columns Translation:
+# '報告日':'Reporting Date'
+# '決算日': 'Closing Date'
+# '経営方針、経営環境及び対処すべき課題':'Business Policy, Business Environment, and Issues to be Addressed'
+# '事業等のリスク':'Business Risks'
+# '経営者による財政状態、経営成績及びキャッシュ・フローの状況の分析':'Management’s Discussion and Analysis of Financial Position, Operating Results, and Cash Flows'
+# '生産、受注及び販売の状況':'Production, Orders, and Sales Status'
+# '業績等の概要':'Overview of Business Results'
+# '経営上の重要な契約':'Material Contracts for Operation'
+# '研究開発活動':'Research and Development Activities'
+# 'サステナビリティに関する考え方及び取組':'Approach and Initiatives Regarding Sustainability'
+# '人的資本目標':'Human Capital Targets'
+# 'コーポレート・ガバナンス':'Corporate Governance'
 output_df = pd.DataFrame(extracted_data, columns=columns)
 output_file = 'extracted_data.csv'
 output_df = output_df.sort_values(['ticker', '決算日'])

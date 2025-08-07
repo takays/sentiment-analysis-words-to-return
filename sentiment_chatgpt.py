@@ -41,7 +41,18 @@ def analyze_sentiment(df, api_model):
     「即席麺部門は、製造ラインの移設に伴う稼働率の低下と受託が低調に推移し、また、３月に製造ラインを増設しましたが、売上の寄与は低く、売上高は7,085百万円と前年同期と比べ659百万円（8.5％）の減収となり、セグメント利益（営業利益）は204百万円と前年同期と比べ219百万円（51.8％）の減益となりました」
     「しかしながら、資材費や労務費のコストが高止まりする中で、北海道・東北地区の集中豪雨の影響により、公共工事の優先順位が入れ替わり、当初予定されていた工期が先延ばしになるなど、当社を取り巻く経営環境は厳しい状況で推移しました」
     「当事業年度におけるわが国経済は、政府による経済政策や金融政策の総動員もあり、緩やかな回復基調となったものの、個人消費や設備投資は力強さを欠き、海外経済の減速と為替、原材料価格の変動リスクを抱え、先行き不透明な状況が続いた」"""
-     
+    
+    # [English Translation/Summary of the above prompt]
+    # You are a securities analyst. Read the following corporate disclosure information, consider the context, and calculate a positive_sentiment_score and a negative_sentiment_score that sum to 100.
+    # (Rules)
+    # - Output in the following format: positive_score: X(0-100) negative_score: Y(0-100)
+    # - Ensure that positive_score and negative_score add up to 100.
+    # - Strictly evaluate the entire content of the disclosure, referring to the examples provided.
+    # - Do not output the reasoning, only the scores in the specified format.
+    # The prompt then provides several examples of sentences that should be scored as 100% positive and 100% negative.
+    # Positive examples include phrases like 'segment profit increased,' 'the economy recovered moderately,' 'operating profit increased significantly.'
+    # Negative examples include phrases like 'sales decreased,' 'operating profit decreased,' 'the business environment remained challenging,' 'the outlook is uncertain.'
+    
     def split_text(text, max_chars=max_chars_per_chunk):
         sentences = text.split('。')
         chunks = []
@@ -69,12 +80,12 @@ def analyze_sentiment(df, api_model):
         text = row['MDA']
         ticker = row['ticker']
         name = row['name']
-        closing_date = row['決算日']
-        reporting_date = row['報告日']
+        closing_date = row['決算日']    # Column name:'Closing Date'
+        reporting_date = row['報告日']  # Column name:'Reporting Date'
         year = row['year']
         month = row['month']
         industry_33 = row['industry_33']
-        MDA_文字数 = row['MDA_文字数']
+        MDA_文字数 = row['MDA_文字数']  # Column name:'MDA Character Count'
         positive_probability = 	row['positive_probability']
         negative_probability = 	row['negative_probability']
         
@@ -150,7 +161,7 @@ def analyze_sentiment(df, api_model):
             "input_tokens": all_input_tokens,
             "output_tokens": all_output_tokens,
             "industry_33": industry_33,
-            "MDA_文字数": MDA_文字数
+            "MDA_文字数": MDA_文字数    # 'MDA Character Count'
         }
         if len(text_chunks) > 1:
             result_rand["chunk_responses"] = chunk_texts
@@ -195,11 +206,11 @@ with open('error_tickers.txt', 'w') as f:
 directory = '/'
 csv_files = [os.path.join(directory, file) for file in os.listdir(directory) if file.endswith('.csv')]
 
-df_list = [pd.read_csv(file, parse_dates=['決算日', '報告日'], dtype={'ticker':'object', 'year':'object', 'month':'object'}) for file in csv_files]
+df_list = [pd.read_csv(file, parse_dates=['決算日', '報告日'], dtype={'ticker':'object', 'year':'object', 'month':'object'}) for file in csv_files] # 'closing_date', 'reporting_date'
 combined_df = pd.concat(df_list, axis=0)
 
 output_file = 'combined_output.csv'
-combined_df = combined_df.sort_values(['ticker', '決算日'])
+combined_df = combined_df.sort_values(['ticker', '決算日']) # 'closing_date'
 combined_df[['ticker', 'year', 'month']] = combined_df[['ticker', 'year', 'month']].astype(str)
 combined_df.to_csv(output_file, index=False)
 
